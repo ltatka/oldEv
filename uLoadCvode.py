@@ -12,9 +12,10 @@ CV_SUCCESS = 0
 
 # sundials is a submodule.
 PROJ_ROOT = dirname(__file__)  # top level root directory
-SUNDIALS_SRC = join(PROJ_ROOT, "sundials")  # sundials source directory
+#SUNDIALS_SRC = join(PROJ_ROOT, "sundials")  # sundials source directory
 #SUNDIALS_INSTALL_PREFIX = join(SUNDIALS_SRC, f"sundials-install-{platform}")
-SUNDIALS_INSTALL_PREFIX = "/home/hellsbells/evolution/sundials-install-linux"
+SUNDIALS_INSTALL_PREFIX = join(PROJ_ROOT, f"sundials-install-{platform}")
+
 
 # print(SUNDIALS_INSTALL_PREFIX)
 # if not isdir(SUNDIALS_INSTALL_PREFIX):
