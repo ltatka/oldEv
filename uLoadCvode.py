@@ -4,6 +4,7 @@ from typing import List
 import numpy as np
 from os.path import exists, isfile, isdir, split, splitext, join, dirname
 from sys import platform
+from distro import id
 
 CV_BDF = 2
 CV_ADAMS = 1
@@ -28,18 +29,24 @@ SUNDIALS_INSTALL_PREFIX = join(PROJ_ROOT, f"sundials-install-{platform}")
 # where platform is the output from sys.platform in Python.
 # """)
 
-SUNDIALS_LIB_DIR = join(SUNDIALS_INSTALL_PREFIX, "lib")
 
 PLATFORM_SHARED_LIBRARY_EXTENSION = None
 PLATFORM_SHARED_LIBRARY_PREFIX = None
 if platform == "win32":
+    SUNDIALS_LIB_DIR = join(SUNDIALS_INSTALL_PREFIX, "lib")
     PLATFORM_SHARED_LIBRARY_EXTENSION = "dll"
     PLATFORM_SHARED_LIBRARY_PREFIX = ""
 elif platform == "linux":
     PLATFORM_SHARED_LIBRARY_EXTENSION = "so"
     PLATFORM_SHARED_LIBRARY_PREFIX = "lib"
+    distribution = id()
+    if distribution == "centos" or distribution == "fedora":
+        SUNDIALS_LIB_DIR = join(SUNDIALS_INSTALL_PREFIX,  "lib64")
+    else:
+        SUNDIALS_LIB_DIR = join(SUNDIALS_INSTALL_PREFIX, "lib")
     pass
 elif platform == "darwin":
+    SUNDIALS_LIB_DIR = join(SUNDIALS_INSTALL_PREFIX, "lib")
     PLATFORM_SHARED_LIBRARY_EXTENSION = "dylib"
     PLATFORM_SHARED_LIBRARY_PREFIX = "lib"
 
