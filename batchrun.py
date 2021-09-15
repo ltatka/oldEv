@@ -16,6 +16,7 @@ import argparse
 parser = argparse.ArgumentParser()
 parser.add_argument("-r", default=10, type=int, help="Change the number of evolution trials")
 parser.add_argument("-multiprocess", default="True", type=str, help="Enable or disable multiprocessing")
+args = parser.parse_args()
 
 def toBool(args):
     multiprocess = args.multiprocess.upper()
