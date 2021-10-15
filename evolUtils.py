@@ -125,7 +125,7 @@ class Evolver(object, metaclass=PostInitCaller):
                         "timetaken": 0}
 
 
-ev = Evolver()
+ev = Evolver(allowAutocatalysis=False)
 
 def addReaction(model, probabilites='equal'):
     ev.tracker["nAddReactions"] += 1
