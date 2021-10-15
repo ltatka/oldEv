@@ -197,81 +197,33 @@ def _pickReactionType():
 # S1 + S1 -> S1
 def _generateReactionList(nSpecies, nReactions, allowAutocatalysis=True):
     reactionList = []
+    floats = list(range(nSpecies))
     for r in range(nReactions):
-
+        r1 = None
+        p1 = None
         rateConstant = _random.random() * Settings.rateConstantScale
         rt = _pickReactionType()
         if rt == TReactionType.UniUni:
-            # UniUni
-            reactant = _random.randint(0, nSpecies - 1)
-            product = _random.randint(0, nSpecies - 1)
-            # Disallow S1 -> S1 type of reaction
-            while product == reactant:
-                product = _random.randint(0, nSpecies - 1)
-            reactionList.append([rt, [reactant], [product], rateConstant])
-
-        if rt == TReactionType.BiUni:
-            # BiUni
-            # Pick two reactants
-            reactant1 = _random.randint(0, nSpecies - 1)
-            reactant2 = _random.randint(0, nSpecies - 1)
-            if Settings.allowMassViolatingReactions:
-                product = _random.randint(0, nSpecies - 1)
-            else:
-                # pick a product but only products that don't include the reactants
-                species = range(nSpecies)
-                # Remove reactant1 and 2 from the species list
-                species = _np.delete(species, [reactant1, reactant2], axis=0)
-                if len(species) == 0:
-                    raise Exception("Unable to pick a species why maintaining mass conservation")
-                # Then pick a product from the reactants that are left
-                product = species[_random.randint(0, len(species) - 1)]
-
-            reactionList.append([rt, [reactant1, reactant2], [product], rateConstant])
-
-        if rt == TReactionType.UniBi:
-            # UniBi
-            reactant1 = _random.randint(0, nSpecies - 1)
-            if allowAutocatalysis or Settings.allowMassViolatingReactions:
-                product1 = _random.randint(0, nSpecies - 1)
-                product2 = _random.randint(0, nSpecies - 1)
-            # If we don't want autocatalysis, then UniBi reactions must be mass conserved.
-            else:
-                # pick a product but only products that don't include the reactant
-                species = range(nSpecies)
-                # Remove reactant1 from the species list
-                species = _np.delete(species, [reactant1], axis=0)
-                if len(species) == 0:
-                    raise Exception("Unable to pick a species why maintaining mass conservation")
-
-                # Then pick a product from the reactants that are left
-                product1 = species[_random.randint(0, len(species) - 1)]
-                product2 = species[_random.randint(0, len(species) - 1)]
-
-            reactionList.append([rt, [reactant1], [product1, product2], rateConstant])
-
-        if rt == TReactionType.BiBi:
-            # BiBi
-            reactant1 = _random.randint(0, nSpecies - 1)
-            reactant2 = _random.randint(0, nSpecies - 1)
+            r1 = [_random.choice(floats)]
+            p1 = [_random.choice(floats)]
+            while p1[0] == r1[0]:
+                p1 = [_random.choice(floats)]
+        elif rt == TReactionType.BiUni:
+            r1 = [_random.choice(floats), _random.choice(floats)]
+            p1 = [_random.choice(floats)]
+        elif rt == TReactionType.UniBi:
+            r1 = [_random.choice(floats)]
+            p1 = [_random.choice(floats), _random.choice(floats)]
             if not allowAutocatalysis:
-                # If we don't want autocatalysis, then neither of the products can be the same as the reactant
-                species = range(nSpecies)
-                # Remove reactant1 and 2 from the species list
-                species = _np.delete(species, [reactant1, reactant2], axis=0)
-                if len(species) == 0:
-                    raise Exception("Unable to pick a species why mainting mass conservation")
-                    # Then pick a product from the reactants that are left
-                product1 = species[_random.randint(0, len(species) - 1)]
-                product2 = species[_random.randint(0, len(species) - 1)]
-            else:
-                # if we allow autocatalyis, then we can pick any products, the only risk being that they are the same
-                # as the reactants so the reaction is irrelevant
-                product1 = _random.randint(0, nSpecies - 1)
-                product2 = _random.randint(0, nSpecies - 1)
-            element = [rt, [reactant1, reactant2], [product1, product2], rateConstant]
-            reactionList.append(element)
-
+                while r1[0] == p1[0] == p1[1]:
+                    p1 = [_random.choice(floats), _random.choice(floats)]
+        elif rt == TReactionType.BiBi:
+            r1 = [_random.choice(floats), _random.choice(floats)]
+            p1 = [_random.choice(floats), _random.choice(floats)]
+            if not allowAutocatalysis:
+                while p1[0] == p1[1] and (r1[0] in p1 or r1[1] in p1):
+                    p1 = [_random.choice(floats), _random.choice(floats)]
+        reactionList.append([rt, r1, p1, rateConstant])
     reactionList.insert(0, nSpecies)
     return reactionList
 

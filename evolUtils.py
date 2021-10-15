@@ -159,7 +159,7 @@ def addReaction(model, probabilites='equal'):
         r1 = [random.choice(floats)]
         p1 = [random.choice(floats), random.choice(floats)]
         if not ev.allowAutocatalysis:
-            while r1[0] == p1[0] == p[1]:
+            while r1[0] == p1[0] == p1[1]:
                 p1 = [random.choice(floats), random.choice(floats)]
         reaction.reactant1 = r1[0]
         reaction.product1 = p1[0]
@@ -240,18 +240,7 @@ def refactorMmodel(model):
 
 
 def makeModel(nSpecies, nReactions):
-    # There is no way to prevent autocatalyis in the teUtils module.
-    # If we allow autocatalysis, we can just use the network generator in teUtils
-    # Otherwise we'll use the teUtils network generator to make a model with no reactions, then add in reactions
-    # using the addReaction function which can prevent autocatalysis. We set probabilities='unequal' so the reactions
-    # will be set with the desired probabilites we've set in the builder (otherwise there will be equal chance of 
-    # each type of reaction
-    if ev.allowAutocatalysis:
-        model = tu.getRandomNetworkDataStructure(nSpecies, nReactions)
-    else:
-        model = tu.getRandomNetworkDataStructure(nSpecies, 0)
-        for i in range(nReactions):
-            addReaction(model, probabilites='unequal')
+    model = tu.getRandomNetworkDataStructure(nSpecies, nReactions, allowAutocatalysis=ev.allowAutocatalysis)
     nFloats = len(model[0])
     nBoundary = len(model[1])
     model.insert(0, nFloats)
