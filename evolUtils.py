@@ -66,7 +66,7 @@ class PostInitCaller(type):
 class Evolver(object, metaclass=PostInitCaller):
 
 
-    def __init__(self, configuration=None, probabilities=None):
+    def __init__(self, configuration=None, probabilities=None, allowAutocatalysis=True):
         # If no configuration is given, load the default
         if not configuration:
             self.currentConfig = loadConfiguration()
@@ -76,6 +76,7 @@ class Evolver(object, metaclass=PostInitCaller):
         self.objectiveData = readObjectiveFunction()
         self.makeTracker()
         self.setReactionProbabilities([0.1, 0.4, 0.4, 0.1])  # Set default reaction probabilites
+        self.allowAutocatalysis = allowAutocatalysis
 
     def post_init(self):
         self.topElite = math.trunc(self.currentConfig['percentageCloned'] * self.currentConfig['sizeOfPopulation'])
@@ -126,10 +127,21 @@ class Evolver(object, metaclass=PostInitCaller):
 
 ev = Evolver()
 
-def addReaction(model):
+def addReaction(model, probabilites='equal'):
     ev.tracker["nAddReactions"] += 1
     floats = range(0, model.numFloats)  # numFloats = number of floating species
-    rt = random.randint(0, 3)  # Reaction type
+    if probabilites == 'equal':
+        rt = random.randint(0, 3)  # Reaction type
+    else:
+        rand = random.random()
+        if rand < ev.builder.Settings.ReactionProbabilities.UniUni:
+            rt = 0
+        elif rand < ev.builder.Settings.ReactionProbabilities.BiUni:
+            rt = 1
+        elif rand < ev.builder.Settings.ReactionProbabilities.UniBi:
+            rt = 2
+        else:
+            rt = 3
     reaction = TReaction()
     reaction.reactionType = rt
     if rt == tu.TReactionType.UniUni:
@@ -137,45 +149,31 @@ def addReaction(model):
         p1 = [random.choice(floats)]
         reaction.reactant1 = r1[0]
         reaction.product1 = p1[0]
-
-    if rt == tu.TReactionType.BiUni:
+    elif rt == tu.TReactionType.BiUni:
         r1 = [random.choice(floats), random.choice(floats)]
         p1 = [random.choice(floats)]
         reaction.reactant1 = r1[0]
         reaction.reactant2 = r1[1]
         reaction.product1 = p1[0]
-    if ev.currentConfig["massConserved"] == True:
-        count = 0
-        while reaction.product1 == reaction.reactant1 or reaction.product1 == reaction.reactant2:
-            p1 = [random.choice(floats)]
-            reaction.product1 = p1[0]
-            count += 1
-            if count > 50:  # quit trying after 50 attempts
-                return model
-
-    if rt == tu.TReactionType.UniBi:
+    elif rt == tu.TReactionType.UniBi:
         r1 = [random.choice(floats)]
         p1 = [random.choice(floats), random.choice(floats)]
+        if not ev.allowAutocatalysis:
+            while r1[0] == p1[0] == p[1]:
+                p1 = [random.choice(floats), random.choice(floats)]
         reaction.reactant1 = r1[0]
         reaction.product1 = p1[0]
         reaction.product2 = p1[1]
-    if ev.currentConfig["massConserved"] == True:
-        count += 1
-        while reaction.reactant1 == reaction.product1 or reaction.reactant1 == reaction.product2:
-            r1 = [random.choice(floats)]
-            reaction.reactant1 = r1[0]
-            count += 1
-            if count > 50:  # quit trying after 50 attempts
-                return model
-
-    if rt == tu.TReactionType.BiBi:
+    elif rt == tu.TReactionType.BiBi:
         r1 = [random.choice(floats), random.choice(floats)]
         p1 = [random.choice(floats), random.choice(floats)]
+        if not ev.allowAutocatalysis:
+            while p1[0] == p1[1] and (r1[0] in p1 or r1[1] in p1):
+                p1 = [random.choice(floats), random.choice(floats)]
         reaction.reactant1 = r1[0]
         reaction.reactant2 = r1[1]
         reaction.product1 = p1[0]
         reaction.product2 = p1[1]
-
     reaction.rateConstant = random.random() * ev.currentConfig['rateConstantScale']
     model.reactions.append(reaction)
     return model
@@ -242,7 +240,18 @@ def refactorMmodel(model):
 
 
 def makeModel(nSpecies, nReactions):
-    model = tu.getRandomNetworkDataStructure(nSpecies, nReactions)
+    # There is no way to prevent autocatalyis in the teUtils module.
+    # If we allow autocatalysis, we can just use the network generator in teUtils
+    # Otherwise we'll use the teUtils network generator to make a model with no reactions, then add in reactions
+    # using the addReaction function which can prevent autocatalysis. We set probabilities='unequal' so the reactions
+    # will be set with the desired probabilites we've set in the builder (otherwise there will be equal chance of 
+    # each type of reaction
+    if ev.allowAutocatalysis:
+        model = tu.getRandomNetworkDataStructure(nSpecies, nReactions)
+    else:
+        model = tu.getRandomNetworkDataStructure(nSpecies, 0)
+        for i in range(nReactions):
+            addReaction(model, probabilites='unequal')
     nFloats = len(model[0])
     nBoundary = len(model[1])
     model.insert(0, nFloats)
