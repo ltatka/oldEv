@@ -215,13 +215,21 @@ def _generateReactionList(nSpecies, nReactions, allowAutocatalysis=True):
             r1 = [_random.choice(floats)]
             p1 = [_random.choice(floats), _random.choice(floats)]
             if not allowAutocatalysis:
+                count = 0
                 while r1[0] == p1[0] == p1[1]:
+                    count += 1
+                    if count > 50:
+                        break
                     p1 = [_random.choice(floats), _random.choice(floats)]
         elif rt == TReactionType.BiBi:
             r1 = [_random.choice(floats), _random.choice(floats)]
             p1 = [_random.choice(floats), _random.choice(floats)]
             if not allowAutocatalysis:
+                count = 0
                 while p1[0] == p1[1] and (r1[0] in p1 or r1[1] in p1):
+                    count += 1
+                    if count > 50:
+                        break
                     p1 = [_random.choice(floats), _random.choice(floats)]
         reactionList.append([rt, r1, p1, rateConstant])
     reactionList.insert(0, nSpecies)
