@@ -127,12 +127,13 @@ class Evolver(object, metaclass=PostInitCaller):
 
 ev = Evolver(allowAutocatalysis=False)
 
-def addReaction(model, probabilites='equal'):
+def addReaction(model, useTeUtilProbabilites=True):
     ev.tracker["nAddReactions"] += 1
-    floats = range(0, model.numFloats)  # numFloats = number of floating species
-    if probabilites == 'equal':
-        rt = random.randint(0, 3)  # Reaction type
+    floats = list(range(0, model.numFloats))  # numFloats = number of floating species
+    if not useTeUtilProbabilites: # Equal probabilities of each reaction type
+        rt = random.randint(0, 3) 
     else:
+        # Same reaction type probabilites as random generator
         rand = random.random()
         if rand < ev.builder.Settings.ReactionProbabilities.UniUni:
             rt = 0
@@ -159,7 +160,12 @@ def addReaction(model, probabilites='equal'):
         r1 = [random.choice(floats)]
         p1 = [random.choice(floats), random.choice(floats)]
         if not ev.allowAutocatalysis:
+            count = 0
             while r1[0] == p1[0] == p1[1]:
+                count += 1
+                if count > 50:
+                    print('Oh no I got stuck in an infinite loop!')
+                    break # Give up
                 p1 = [random.choice(floats), random.choice(floats)]
         reaction.reactant1 = r1[0]
         reaction.product1 = p1[0]
@@ -168,7 +174,12 @@ def addReaction(model, probabilites='equal'):
         r1 = [random.choice(floats), random.choice(floats)]
         p1 = [random.choice(floats), random.choice(floats)]
         if not ev.allowAutocatalysis:
+            count = 0
             while p1[0] == p1[1] and (r1[0] in p1 or r1[1] in p1):
+                count += 1
+                if count > 50:
+                    print('Oh no I got stuck in an infinite loop!')
+                    break
                 p1 = [random.choice(floats), random.choice(floats)]
         reaction.reactant1 = r1[0]
         reaction.reactant2 = r1[1]
