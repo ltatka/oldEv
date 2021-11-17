@@ -31,7 +31,8 @@ from configLoader import loadConfiguration
 from uLoadCvode import TCvode
 import uLoadCvode
 
-
+global nSpecies
+nSpecies = 3
 
 def readObjectiveFunction():
     result = readObjData.ObjectiveFunctionData()
@@ -129,7 +130,7 @@ ev = Evolver(allowAutocatalysis=True)
 
 def addReaction(model, useTeUtilProbabilites=True):
     ev.tracker["nAddReactions"] += 1
-    floats = list(range(0, model.numFloats))  # numFloats = number of floating species
+    floats = list(range(0, nSpecies))  # numFloats = number of floating species
     if not useTeUtilProbabilites: # Equal probabilities of each reaction type
         rt = random.randint(0, 3) 
     else:
@@ -137,9 +138,10 @@ def addReaction(model, useTeUtilProbabilites=True):
         rand = random.random()
         if rand < ev.builder.Settings.ReactionProbabilities.UniUni:
             rt = 0
-        elif rand < ev.builder.Settings.ReactionProbabilities.BiUni:
+        elif rand < ev.builder.Settings.ReactionProbabilities.BiUni + ev.builder.Settings.ReactionProbabilities.UniUni:
             rt = 1
-        elif rand < ev.builder.Settings.ReactionProbabilities.UniBi:
+        elif rand < ev.builder.Settings.ReactionProbabilities.BiUni + ev.builder.Settings.ReactionProbabilities.UniUni \
+                + ev.builder.Settings.ReactionProbabilities.UniBi:
             rt = 2
         else:
             rt = 3
