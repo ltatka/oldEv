@@ -1,10 +1,11 @@
 import ctypes as ct
 from typing import List
-
-import numpy as np
-from os.path import exists, isfile, isdir, split, splitext, join, dirname
-from sys import platform
 from distro import id
+import numpy as np
+from os.path import exists, join, dirname, isdir
+from sys import platform
+from pathlib import Path
+
 
 CV_BDF = 2
 CV_ADAMS = 1
@@ -12,13 +13,19 @@ CV_NORMAL = 1
 CV_SUCCESS = 0
 
 # sundials is a submodule.
-PROJ_ROOT = dirname(__file__)  # top level root directory
+
+#parent_dir = Path(dirname(__file__)) # top level root directory)
+#PROJ_ROOT = parent_dir.parent.absolute()
+PROJ_ROOT = "/mmfs1/gscratch/sonora/tatka/old_evolution/oldEv" # <--------- Hard coded because I'm tired of this shit
+print(f" Root: {PROJ_ROOT}")
+
 #SUNDIALS_SRC = join(PROJ_ROOT, "sundials")  # sundials source directory
-#SUNDIALS_INSTALL_PREFIX = join(SUNDIALS_SRC, f"sundials-install-{platform}")
 SUNDIALS_INSTALL_PREFIX = join(PROJ_ROOT, f"sundials-install-{platform}")
 
 
-# print(SUNDIALS_INSTALL_PREFIX)
+
+
+# print(f"INstall prefix: {SUNDIALS_INSTALL_PREFIX}")
 # if not isdir(SUNDIALS_INSTALL_PREFIX):
 #     raise ValueError("""
 # You need to install sundials using cmake. Use:
@@ -32,19 +39,22 @@ SUNDIALS_INSTALL_PREFIX = join(PROJ_ROOT, f"sundials-install-{platform}")
 
 PLATFORM_SHARED_LIBRARY_EXTENSION = None
 PLATFORM_SHARED_LIBRARY_PREFIX = None
+
 if platform == "win32":
     SUNDIALS_LIB_DIR = join(SUNDIALS_INSTALL_PREFIX, "lib")
     PLATFORM_SHARED_LIBRARY_EXTENSION = "dll"
     PLATFORM_SHARED_LIBRARY_PREFIX = ""
 elif platform == "linux":
     PLATFORM_SHARED_LIBRARY_EXTENSION = "so"
-    PLATFORM_SHARED_LIBRARY_PREFIX = "lib"
+
     distribution = id()
-    if distribution == "centos" or distribution == "fedora":
-        SUNDIALS_LIB_DIR = join(SUNDIALS_INSTALL_PREFIX,  "lib64")
-    else:
+    if distribution == "centos":
+        PLATFORM_SHARED_LIBRARY_PREFIX = "lib64"
         SUNDIALS_LIB_DIR = join(SUNDIALS_INSTALL_PREFIX, "lib")
-    pass
+    else: # I guess this is the one that hyak uses...
+        PLATFORM_SHARED_LIBRARY_PREFIX = "lib"
+        SUNDIALS_LIB_DIR = join(SUNDIALS_INSTALL_PREFIX, "lib64")
+
 elif platform == "darwin":
     SUNDIALS_LIB_DIR = join(SUNDIALS_INSTALL_PREFIX, "lib")
     PLATFORM_SHARED_LIBRARY_EXTENSION = "dylib"
