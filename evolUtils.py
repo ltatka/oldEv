@@ -460,24 +460,24 @@ def convertToAntimony2 (model):
         
     for i in range (nReactions):
         reaction = reactions[i]
-        if reaction.reactionType == tu.buildNetworks.TReactionType.UNIUNI:
+        if reaction.reactionType == tu.TReactionType.UniUni:
            S1 = 'S' + str (reaction.reactant1)
            S2 = 'S' + str (reaction.product1)
            astr += S1 + ' -> ' + S2
            astr += '; k' + str(i) + '*' + S1 + '\n'
-        if reaction.reactionType == tu.buildNetworks.TReactionType.BIUNI:
+        if reaction.reactionType == tu.TReactionType.BiUni:
            S1 = 'S' + str (reaction.reactant1)
            S2 = 'S' + str (reaction.reactant2)
            S3 = 'S' + str (reaction.product1)
            astr += S1 + ' + ' + S2 + ' -> ' + S3
            astr += '; k' + str(i) + '*' + S1 + '*' + S2 + '\n'
-        if reaction.reactionType == tu.buildNetworks.TReactionType.UNIBI:
+        if reaction.reactionType == tu.TReactionType.UniBi:
            S1 = 'S' + str (reaction.reactant1)
            S2 = 'S' + str (reaction.product1)
            S3 = 'S' + str (reaction.product2)
            astr += S1 + ' -> ' + S2 + '+' + S3
            astr += '; k' + str(i) + '*' + S1 + '\n'
-        if reaction.reactionType == tu.buildNetworks.TReactionType.BIBI:
+        if reaction.reactionType == tu.TReactionType.BiBi:
            S1 = 'S' + str (reaction.reactant1)
            S2 = 'S' + str (reaction.reactant2)
            S3 = 'S' + str (reaction.product1)
