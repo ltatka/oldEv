@@ -82,6 +82,7 @@ class Evolver(object, metaclass=PostInitCaller):
         self.remainder = self.currentConfig["sizeOfPopulation"] - \
                          math.trunc(self.currentConfig['percentageCloned'] * self.currentConfig['sizeOfPopulation'])
         self.seed = self.currentConfig['seed']
+        self.nSpecies = self.currentConfig['numSpecies']
         if self.seed == -1:
             self.seed = random.randrange(sys.maxsize)
         random.seed(self.seed)
@@ -127,7 +128,6 @@ class Evolver(object, metaclass=PostInitCaller):
 ev = Evolver()
 
 def addReaction(model):
-    ev.tracker["nAddReactions"] += 1
     floats = range(0, model.numFloats)  # numFloats = number of floating species
     rt = random.randint(0, 3)  # Reaction type
     reaction = TReaction()
@@ -139,45 +139,103 @@ def addReaction(model):
         reaction.product1 = p1[0]
 
     if rt == tu.TReactionType.BiUni:
-        r1 = [random.choice(floats), random.choice(floats)]
-        p1 = [random.choice(floats)]
-        reaction.reactant1 = r1[0]
-        reaction.reactant2 = r1[1]
-        reaction.product1 = p1[0]
-    if ev.currentConfig["massConserved"] == True:
-        count = 0
-        while reaction.product1 == reaction.reactant1 or reaction.product1 == reaction.reactant2:
-            p1 = [random.choice(floats)]
-            reaction.product1 = p1[0]
-            count += 1
-            if count > 50:  # quit trying after 50 attempts
-                return model
+        reactant1 = random.randint(0, ev.nSpecies - 1)
+        reactant2 = random.randint(0, ev.nSpecies - 1)
+        if tu.Settings.allowMassViolatingReactions:
+            product = random.randint(0, ev.nSpecies - 1)
+        else:
+            species = range(ev.nSpecies)
+            species = np.delete(species, [reactant1, reactant2], axis=0)
+            if len(species) == 0:
+                raise Exception("Unable to pick a species while maintaining mass conservation")
+            product = species[random.randint(0, len(species) - 1)]
+        reaction.reactant1 = reactant1
+        reaction.reactant2 = reactant2
+        reaction.product1 = product
+
+
+#        r1 = [random.choice(floats), random.choice(floats)]
+#        p1 = [random.choice(floats)]
+#        reaction.reactant1 = r1[0]
+#        reaction.reactant2 = r1[1]
+#        reaction.product1 = p1[0]
+#    if ev.currentConfig["massConserved"] == True:
+#        count = 0
+#        while reaction.product1 == reaction.reactant1 or reaction.product1 == reaction.reactant2:
+#            p1 = [random.choice(floats)]
+#            reaction.product1 = p1[0]
+#            count += 1
+#            if count > 50:  # quit trying after 50 attempts
+#                return model
 
     if rt == tu.TReactionType.UniBi:
-        r1 = [random.choice(floats)]
-        p1 = [random.choice(floats), random.choice(floats)]
-        reaction.reactant1 = r1[0]
-        reaction.product1 = p1[0]
-        reaction.product2 = p1[1]
-    if ev.currentConfig["massConserved"] == True:
-        count += 1
-        while reaction.reactant1 == reaction.product1 or reaction.reactant1 == reaction.product2:
-            r1 = [random.choice(floats)]
-            reaction.reactant1 = r1[0]
-            count += 1
-            if count > 50:  # quit trying after 50 attempts
-                return model
+        reactant1 = random.randint(0, ev.nSpecies - 1)
+        if tu.Settings.allowMassViolatingReactions:
+            product1 = random.randint(0, ev.nSpecies - 1)
+            product2 = random.randint(0, ev.nSpecies - 1) 
+        else:
+            species = range(ev.nSpecies)
+            species = np.delete(species, [reactant1], axis=0)
+            if len(species) == 0:
+                raise Exception("Unable to pick a species while maintaining mass conservation")
+            product1 = species[random.randint(0, len(species) - 1)]
+            product2 = species[random.randint(0, len(species) - 1)]
+        reaction.reactant1 = reactant1
+        reaction.product1 = product1
+        reaction.product2 = product2
+
+
+#        r1 = [random.choice(floats)]
+#        p1 = [random.choice(floats), random.choice(floats)]
+#        reaction.reactant1 = r1[0]
+#        reaction.product1 = p1[0]
+#        reaction.product2 = p1[1]
+#    if ev.currentConfig["massConserved"] == True:
+#        count += 1
+#        while reaction.reactant1 == reaction.product1 or reaction.reactant1 == reaction.product2:
+#            r1 = [random.choice(floats)]
+#            reaction.reactant1 = r1[0]
+#            count += 1j
+#            if count > 50:  # quit trying after 50 attempts
+#                return model
 
     if rt == tu.TReactionType.BiBi:
-        r1 = [random.choice(floats), random.choice(floats)]
-        p1 = [random.choice(floats), random.choice(floats)]
-        reaction.reactant1 = r1[0]
-        reaction.reactant2 = r1[1]
-        reaction.product1 = p1[0]
-        reaction.product2 = p1[1]
+        reactant1 = random.randint(0, ev.nSpecies - 1)
+        reactant2 = random.randint(0, ev.nSpecies - 1)
+        if not ev.autocatalysis:
+            product1 = random.randint(0, ev.nSpecies - 1)
+            product2 = random.randint(0, ev.nSpecies - 1)
+            count = 0
+            while (product1 == product2 and (product1 in [reactant1, reactant2] or product2 in [reactant1, reactant2])) or set([product1, product2]) == set([reactant1, reactant2]):
+                product2 = random.randint(0, ev.nSpecies - 1)
+                count += 1
+                if count > 50:
+                    return
+        else:
+            product1 = random.randint(0, ev.nSpecies - 1)
+            product2 = random.randint(0, ev.nSpecies - 1)
+            count = 0
+            while set([reactant1, reactant2]) == set([product1, product2]):
+                product2 = random.randint(0, ev.nSpecies -1)
+                count += 1
+                if count > 50:
+                    return
+        reaction.reactant1 = reactant1
+        reaction.reactant2 = reactant2
+        reaction.product1 = product1
+        reaction.product2 = product2
+
+
+#        r1 = [random.choice(floats), random.choice(floats)]
+#        p1 = [random.choice(floats), random.choice(floats)]
+#        reaction.reactant1 = r1[0]
+#        reaction.reactant2 = r1[1]
+#        reaction.product1 = p1[0]
+#        reaction.product2 = p1[1]
 
     reaction.rateConstant = random.random() * ev.currentConfig['rateConstantScale']
     model.reactions.append(reaction)
+    ev.tracker["nAddReactions"] += 1
     return model
 
 
